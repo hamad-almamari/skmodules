@@ -1,14 +1,14 @@
-# jai starter kit modules
+## jai starter kit modules
 jai programming language starter kit modules.
 
-# Modules List
+## modules List
 * sk_App
 * sk_Gfx
 
-# Examples
+## examples
 Inside each module folder there is an examples folder.
 
-# License
+## license
 ```
 MIT License
 
