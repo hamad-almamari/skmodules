@@ -7,8 +7,8 @@ jai programming language starter kit modules.
 ## Examples
 Inside each module folder there is an examples folder.
 
-[App](https://github.com/hamad-almamari/jai-sk/tree/master/modules/sk_App/examples)
-[Gfx](https://github.com/hamad-almamari/jai-sk/tree/master/modules/sk_Gfx/examples)
+* [App](https://github.com/hamad-almamari/jai-sk/tree/master/modules/sk_App/examples)
+* [Gfx](https://github.com/hamad-almamari/jai-sk/tree/master/modules/sk_Gfx/examples)
 
 ##
 ```
