@@ -1,14 +1,16 @@
-## jai starter kit modules
 jai programming language starter kit modules.
 
-## modules List
+## Modules List
 * sk_App
 * sk_Gfx
 
-## examples
+## Examples
 Inside each module folder there is an examples folder.
 
-## license
+[App](https://github.com/hamad-almamari/jai-sk/tree/master/modules/sk_App/examples)
+[Gfx](https://github.com/hamad-almamari/jai-sk/tree/master/modules/sk_Gfx/examples)
+
+##
 ```
 MIT License
 
