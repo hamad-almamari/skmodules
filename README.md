@@ -1,4 +1,4 @@
-jai programming language starter kit modules.
+jai programming language starter kit modules. *(WIP)*
 
 ## Modules List
 * sk_App
@@ -9,6 +9,30 @@ Inside each module folder there is an examples folder.
 
 * [App](https://github.com/hamad-almamari/jai-sk/tree/master/modules/sk_App/examples)
 * [Gfx](https://github.com/hamad-almamari/jai-sk/tree/master/modules/sk_Gfx/examples)
+
+### screenshots
+
+![01_hello_gfx](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/01_hello_gfx.png)
+
+![02_vertex_and_index_buffers](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/02_vertex_and_index_buffers.png)
+
+![03_push_constants](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/03_push_constants.png)
+
+![04_multi_window_multi_encoder](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/04_multi_window_multi_encoder.png)
+
+![05_blending_and_multisampling](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/05_blending_and_multisampling.png)
+
+![06_depth](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/06_depth.png)
+
+![08_hello_texture](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/08_hello_texture.png)
+
+![20_hello_cube](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/20_hello_cube.png)
+
+![21_textured_cube](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/21_textured_cube.png)
+
+![30_texture3d](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/30_texture3d.png)
+
+![31_texture2d_array](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/31_texture2d_array.png)
 
 ##
 ```
