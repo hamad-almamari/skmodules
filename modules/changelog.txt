@@ -1,0 +1,11 @@
+-----------------------------------
+v0.00.2 - not released yet
+
+sk_Gfx
+* rename Bind_Group_Range_Info.resource_kind to resource_type.
+* rename update_upload_buffer_data_imm to write_upload_buffer_data_imm.
+* adding constant buffer example.
+
+-----------------------------------
+v0.00.1 - 16/08/2022
+* initial

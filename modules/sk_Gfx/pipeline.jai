@@ -73,7 +73,7 @@ Static_Sampler :: struct {
 // add offset here???? but vulkan do not have offset!
 Bind_Group_Range_Info :: struct {
     shader_register: Shader_Register = -1;    // BaseShaderRegister
-    resource_kind: Shader_Resource_Type;
+    resource_type: Shader_Resource_Type;
     resource_count: u16 = 1;
 }
 

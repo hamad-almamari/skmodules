@@ -123,7 +123,7 @@ random_colors_image: [TEXTURE_3D_SIZE] u8;
 BIND_GROUP_LAYOUT :: Gfx.Bind_Group_Range_Info.[ 
     .{ // at offset 0 of the bind group
         shader_register = 0,        // shader slot "register(t0)"
-        resource_kind   = .TEXTURE, // resource type
+        resource_type   = .TEXTURE, // resource type
     }
 ];
 

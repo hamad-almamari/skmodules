@@ -26,7 +26,11 @@ Inside each module folder there is an examples folder.
 
 ![06_depth](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/06_depth.png)
 
+![07_multi_render_targets_same_pass](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/07_multi_render_targets_same_pass.png)
+
 ![08_hello_texture](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/08_hello_texture.png)
+
+![09_constant_buffer](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/09_constant_buffer.png)
 
 ![20_hello_cube](https://raw.githubusercontent.com/hamad-almamari/jai-sk/master/modules/sk_Gfx/examples/20_hello_cube.png)
 

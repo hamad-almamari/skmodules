@@ -436,7 +436,7 @@ create_buffer :: (buffer_desc:Buffer_Desc, buffer_data:*void = null) -> *Buffer 
     if buffer_data {
         if desc.usage & .UPLOAD_BUFFER { 
             // if upload buffer copy the initial data into the gpu now
-            update_upload_buffer_data_imm(buffer, 0, buffer_data, desc.size);
+            write_upload_buffer_data_imm(buffer, 0, buffer_data, desc.size);
         } else {
             // create temporary upload buffer
             ub_desc: Buffer_Desc;
@@ -445,13 +445,18 @@ create_buffer :: (buffer_desc:Buffer_Desc, buffer_data:*void = null) -> *Buffer 
             upload_buffer := create_buffer(ub_desc);
             release_buffer_wafc(upload_buffer);
             // now copy the data to the temporary upload buffer
-            update_upload_buffer_data_imm(upload_buffer, 0, buffer_data, desc.size);
+            write_upload_buffer_data_imm(upload_buffer, 0, buffer_data, desc.size);
             // add copy buffer command for copy the data from our upload buffer to the created buffer.
             copy_buffer(gs.staging_encoder, buffer, 0, upload_buffer, 0, desc.size);
         }       
     }
 
     return buffer;
+}
+
+calc_constant_buffer_size :: inline (byte_size:u32) -> u32 {
+    a :u32: 255;
+    return (byte_size + a) & ~a;
 }
 
 release_buffer_imm :: (using buffer:*Buffer) {   
@@ -466,7 +471,7 @@ release_buffer_wafc :: inline (buffer:*Buffer) {
 // TODO: rename this to write_buffer_data_imm
 // This CPU method it will over write the buffer (gpu) memory immediately.
 // to avoid changing data that meby in use by the GPU we only allow to overwrite same data once by FRAME count.
-update_upload_buffer_data_imm :: (using dst_buffer:*Buffer, dst_offset:u32, data:*void, size:u32) {
+write_upload_buffer_data_imm :: (using dst_buffer:*Buffer, dst_offset:u32, data:*void, size:u32) {
     Basic.assert(mapped_ptr != null && data != null && desc.usage & .UPLOAD_BUFFER != 0);
     Basic.assert(dst_offset + size <= desc.size);
     memcpy(mapped_ptr+dst_offset, data, size);
@@ -702,10 +707,16 @@ create_bind_group :: (resource_count: u32) -> *Bind_Group {
     return bind_group;  
 }
 
+// TODO: use one proc like bind resource?
 // @Speed meby we want to do not allow re bind with same offset
 bind_texture :: (bind_group:*Bind_Group, offset:u32, texture:*Texture) {
     inline backend_bind_texture(bind_group, offset, texture);   
 }
+
+bind_constant_buffer :: (bind_group:*Bind_Group, offset:u32, buffer:*Buffer) {
+    inline backend_bind_constant_buffer(bind_group, offset, buffer);   
+}
+
 
 release_bind_group_imm :: (bind_group:*Bind_Group) {   
     inline backend_deinit_bind_group(bind_group);

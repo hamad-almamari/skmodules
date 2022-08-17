@@ -58,7 +58,11 @@ backend_init_pipeline :: (using pipeline:*Pipeline) -> bool {
         offset_in_bg: u32 = 0; // offset in descriptors (within DESCRIPTOR_TABLE)
         for i:0..ranges.count-1 {
             // TODO assert for view type
-            ranges[i].RangeType          = .SRV; // TEMP-----------------------------
+            if #complete layout[i].resource_type == {
+                case .INVALID; Basic.assert(false);// TODO: ignore
+                case .CONSTANT_BUFFER; ranges[i].RangeType = .CBV;
+                case .TEXTURE;         ranges[i].RangeType = .SRV;
+            }
             ranges[i].NumDescriptors     = layout[i].resource_count; // count of the resources in the range
             ranges[i].BaseShaderRegister = cast(u32) layout[i].shader_register; // need ERROR check
             ranges[i].RegisterSpace      = 0;

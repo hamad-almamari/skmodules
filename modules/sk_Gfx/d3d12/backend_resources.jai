@@ -25,7 +25,8 @@ backend_init_buffer :: (using buffer:*Buffer) -> bool {
     heap_properties.MemoryPoolPreference = .UNKNOWN;
     heap_properties.CreationNodeMask     = 0;
     heap_properties.VisibleNodeMask      = 0;
-
+    // in d3d12 Constant buffers must be 256 byte aligned.
+    if desc.usage & .CONSTANT_BUFFER then desc.size = calc_constant_buffer_size(desc.size);
     res: D3D12_RESOURCE_DESC;
     res.Dimension  = .BUFFER;
     res.Alignment  = 0;
@@ -218,7 +219,7 @@ backend_init_texture :: (using texture:*Texture, texture_data:*void = null) -> b
         // pResourceDesc: *D3D12_RESOURCE_DESC, FirstSubresource: u32, NumSubresources: u32, BaseOffset: u64, pLayouts: *D3D12_PLACED_SUBRESOURCE_FOOTPRINT, pNumRows: *u32, pRowSizeInBytes: *u64, pTotalBytes: *u64
         sub_resource_count := desc.array_count * desc.mip_count; // TODO: DEPTH STINCIL
         ID3D12Device_GetCopyableFootprints(gs.d3d_device, *res, 0, sub_resource_count, 0, fp.data, src_height.data, src_stride.data, *texture_upload_size);
-        Basic.print("fp:% \n num_rows:% \n src_stride:% \n texture_upload_size:%, size:%\n", fp, src_height, src_stride, texture_upload_size, upload_size);
+        // Basic.print("fp:% \n num_rows:% \n src_stride:% \n texture_upload_size:%, size:%\n", fp, src_height, src_stride, texture_upload_size, upload_size);
         // shall we move this otside of the backend???????
         ub_desc: Buffer_Desc;
         ub_desc.usage = .UPLOAD_BUFFER;
@@ -244,40 +245,10 @@ backend_init_texture :: (using texture:*Texture, texture_data:*void = null) -> b
                     //Basic.print("z:% - y:%\n", z, y);
                     src_row_offset  := src_slice_offset + src_layer_offset + (y * src_stride[subrss]);
                     dst_row_offset  := dst_slice_offset + dst_layer_offset + (y * dst_stride);
-                    Basic.print("subresource:% - src_row_offset:% - dst_row_offset:%\n", subrss, src_row_offset, dst_row_offset);
-                    update_upload_buffer_data_imm(upload_buffer, cast(u32) dst_row_offset, texture_data + src_row_offset, cast(u32) src_stride[subrss]);          
+                    //Basic.print("subresource:% - src_row_offset:% - dst_row_offset:%\n", subrss, src_row_offset, dst_row_offset);
+                    write_upload_buffer_data_imm(upload_buffer, cast(u32) dst_row_offset, texture_data + src_row_offset, cast(u32) src_stride[subrss]);          
                 }
             }
-            // copy each row data of the sub resource to the upload buffer
-            //     for z:0..TEXTURE_DEPTH-1 {
-            //     for y:0..TEXTURE_HEIGHT-1 {
-            //         stride     := TEXTURE_WIDTH * 1; // bytes per row (we * 1, bcz we are using R8 format). for example if you are using .RGBA format use * 4.
-            //         src_offset := (y * TEXTURE_DEPTH + z) * TEXTURE_WIDTH;
-            //         dst_offset := (z * TEXTURE_HEIGHT + y) * TEXTURE_WIDTH;
-            //         memcpy(texture3d.data + dst_offset, TEXTURE_2D_DATA.data + src_offset, stride);
-            //     }            
-            // }
-            // dummy: [760] u8;
-            // update_upload_buffer_data_imm(upload_buffer, 0, dummy.data, cast(u32) dummy.count); 
-            // for z:0..fp[mip].Footprint.Depth-1 {
-            // for y:0..fp[mip].Footprint.Height-1 {
-            //     dst_offset := fp[mip].Offset + (z * fp[mip].Footprint.RowPitch * fp[mip].Footprint.Height) + (y * fp[mip].Footprint.RowPitch);
-            //     src_data   := texture_data + (y * row_size_in_bytes[mip]);
-            //     //Basic.print("%\n", src_stride[mip]);
-            //     update_upload_buffer_data_imm(upload_buffer, cast(u32) dst_offset, src_data, cast(u32) row_size_in_bytes[mip]); 
-            // }
-            // }
-            // ggg := fp[mip].Footprint.Height * fp[mip].Footprint.Depth;
-            // for y:0..ggg-1 {
-            //     dst_offset := fp[mip].Offset + (y * fp[mip].Footprint.RowPitch);
-            //     src_data   := texture_data + (y * row_size_in_bytes[mip]);
-            //     //Basic.print("%\n", src_stride[mip]);
-            //     update_upload_buffer_data_imm(upload_buffer, cast(u32) dst_offset, texture_data, cast(u32) row_size_in_bytes[mip]); 
-            // }
-            // arr := Basic.NewArray(xx texture_upload_size, u8);
-            // for 0..arr.count-1 arr[it] = 255;
-            // update_upload_buffer_data_imm(upload_buffer, cast(u32) fp[mip].Offset, arr.data, cast(u32) texture_upload_size);
-
             dst_loc: D3D12_TEXTURE_COPY_LOCATION;
             dst_loc.pResource        = d3d_resource;
             dst_loc.Type             = .SUBRESOURCE_INDEX;
@@ -348,8 +319,8 @@ backend_init_bind_group :: (bind_group:*Bind_Group) -> bool {
     return true;  
 }
 
-backend_deinit_bind_group :: (bind_group:*Bind_Group) #expand{
-
+backend_deinit_bind_group :: (bind_group:*Bind_Group) #expand {
+    // nothing for now, here Ihinck we shall recoord the empty slots for using them
 }
 
 backend_bind_texture :: (bind_group:*Bind_Group, offset:u32, texture:*Texture) {
@@ -358,15 +329,23 @@ backend_bind_texture :: (bind_group:*Bind_Group, offset:u32, texture:*Texture) {
     heap_offset     := bind_group.d3d_heap_offset + offset;
     Basic.assert(heap_offset < bind_group.resource_count + offset); // make sure we stil within bind group range
     heap_cpu_handle.ptr += heap_offset * heap_inc_size; 
-
-    // check usage
-    // view_desc: D3D12_SHADER_RESOURCE_VIEW_DESC; // TEMP fill base on desc
-    // view_desc.Format           = conv_texture_format(tex.desc.format);
-    // view_desc.ViewDimension    = .TEXTURE2D;
-    // view_desc.Shader4ComponentMapping = cast(u32) D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING();
-    // view_desc.Texture2D.MipLevels     = 1; // @mipCount
-    // for now we do not pass the desc
+    // create the view
+    Basic.assert(texture.desc.usage & .SHADER_RESOURCE != 0);
     ID3D12Device_CreateShaderResourceView(gs.d3d_device, texture.d3d_resource, null, heap_cpu_handle);    
+}
+
+backend_bind_constant_buffer :: (bind_group:*Bind_Group, offset:u32, buffer:*Buffer) {
+    heap_inc_size   := ID3D12Device_GetDescriptorHandleIncrementSize(gs.d3d_device, .CBV_SRV_UAV);
+    heap_cpu_handle := ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(gs.d3d_bgr_views_heap);
+    heap_offset     := bind_group.d3d_heap_offset + offset;
+    Basic.assert(heap_offset < bind_group.resource_count + offset); // make sure we stil within bind group range
+    // heap_cpu_handle.ptr += heap_offset * heap_inc_size;
+    // create the view
+    Basic.assert(buffer.desc.usage & .CONSTANT_BUFFER != 0);
+    view_desc : D3D12_CONSTANT_BUFFER_VIEW_DESC;
+    view_desc.BufferLocation = buffer.d3d_gpu_va;
+    view_desc.SizeInBytes    = buffer.desc.size;
+    ID3D12Device_CreateConstantBufferView(gs.d3d_device, *view_desc, heap_cpu_handle);
 }
 
 // ---
