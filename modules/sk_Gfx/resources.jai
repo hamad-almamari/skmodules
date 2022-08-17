@@ -708,7 +708,7 @@ create_bind_group :: (resource_count: u32) -> *Bind_Group {
 }
 
 // TODO: use one proc like bind resource?
-// @Speed meby we want to do not allow re bind with same offset
+// @Speed meby we want to do not allow re bind with same offset???
 bind_texture :: (bind_group:*Bind_Group, offset:u32, texture:*Texture) {
     inline backend_bind_texture(bind_group, offset, texture);   
 }

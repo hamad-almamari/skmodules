@@ -28,7 +28,7 @@ Level_Data :: struct {
 
 BIND_GROUP_LAYOUT :: Gfx.Bind_Group_Range_Info.[ 
     .{ // at offset 0 of the bind group
-        shader_register = 0,                // shader slot "register(c0)" 
+        shader_register = 0,                // shader slot "register(c0)" (if you are using root constants (pushed constants) make sure to do not use same register)
         resource_type   = .CONSTANT_BUFFER, // resource type
     }
     // ...
