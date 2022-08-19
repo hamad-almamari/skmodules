@@ -32,6 +32,8 @@ for_expansion :: DataStorage.for_expansion;
 
 #if BACKEND == .D3D12 {
     #load "d3d12/backend.jai";
+}  else #if BACKEND == .VULKAN {
+    #load "vulkan/backend.jai";
 } else #if BACKEND == .DUMMY {
     #load "dummy/backend.jai";
 }
@@ -45,8 +47,9 @@ for_expansion :: DataStorage.for_expansion;
 //---------------------------------------------------------------------
 
 Backend :: enum u16 {
-    DUMMY :: 1;
-    D3D12 :: 2;
+    DUMMY  :: 1;
+    D3D12  :: 2;
+    VULKAN :: 3;
 }
 
 ASSERT_ON_FAIL :: true;
