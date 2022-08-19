@@ -2,13 +2,9 @@
 Basic :: #import "Basic";
 App   :: #import "sk_App"; 
 
-
 //Gfx   :: #import "sk_Gfx"()(BACKEND = .DUMMY);
 Gfx   :: #import "sk_Gfx"()(BACKEND = .D3D12);
-
-// #if false {
-    D3d12 :: #import "d3d12"()(INCLUDE_DEBUG_BINDINGS=true); // just to set INCLUDE_DEBUG_BINDINGS
-// }
+D3d12 :: #import "d3d12"()(INCLUDE_DEBUG_BINDINGS=true); // just to set INCLUDE_DEBUG_BINDINGS
 
 // You can use "sk_Gfx" with any module that provides native window handle all what we need is the native window handle.
 // in this example we will use "sk_App" module for creating the window.

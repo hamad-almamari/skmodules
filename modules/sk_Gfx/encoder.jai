@@ -10,8 +10,8 @@ Encoder :: struct {  // RESET some of THIS at begin
 }
 
 Encoder_State :: enum u16 {
-    INVALID      :: 0; 
-    INITIAL      :: 1; // after execute
+    INVALID      :: 0; // after execute
+    INITIAL      :: 1; // when the encoder resrved from the storage
     RECORDING    :: 2; // after begin
     RECORDING_RP :: 3; // inside render pass
     EXECUTABLE   :: 4; // after end
@@ -60,6 +60,7 @@ begin_commands :: inline (pipeline: *Pipeline = null, priority := Execute_Priori
     encoder.priority = priority;
     encoder.pipeline = pipeline;
     encoder.thread_guard = context.thread_index;
+    encoder.current_state = .INITIAL;
     if !backend_begin_commands(encoder) {
         report_debug_msg(.ERROR, "begining new command encoder failed.");
         return null;

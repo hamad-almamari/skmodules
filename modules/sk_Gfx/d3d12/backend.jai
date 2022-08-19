@@ -249,8 +249,6 @@ backend_deinit :: () {
 }
 
 backend_execute :: () {
-    // end resource staging encoder
-    end_commands(gs.staging_encoder);
     // swc reslove commands 
     resolve_cmds := begin_commands(null, .LAST);
     for gs.swc_storage {
@@ -287,11 +285,10 @@ backend_execute :: () {
         // MOVE this outside the backend
         for encoder: gs.enc_storage {
             using encoder;
-            // break if the encoder not used this frame or not inited
-            if current_state == .INITIAL || current_state == .INVALID break;   // this the last used one
+            if current_state == .INVALID break;         // this the last used one
             Basic.assert(current_state == .EXECUTABLE); // make sure it closed
             Basic.array_add(*gs.d3d_command_list_arrays[priority], d3d_command_list);
-            current_state = .INITIAL;
+            current_state = .INVALID;
         }
 
         for gs.d3d_command_list_arrays {
@@ -301,7 +298,6 @@ backend_execute :: () {
         }
 
         for i:0..PRIORTY_COUNT-1 Basic.array_reset_keeping_memory(*gs.d3d_command_list_arrays[i]);
-        DataStorage.reset(*gs.enc_storage); // MOVE: out
     }
 
     // timeline mark (execute completed)
@@ -334,7 +330,7 @@ backend_execute :: () {
         }
 
         active_buffer_index  = cast(u16) IDXGISwapChain3_GetCurrentBackBufferIndex(d3d_swapchain);
-        swap_required       = false;
+        swap_required        = false;
 
         // timeline mark (swapchain x)
         // // DO WE NEED THIS 
@@ -350,7 +346,7 @@ backend_execute :: () {
     // move to next frame
     gs.active_frame = (gs.active_frame+1) % FRAME_COUNT;
 
-    // wait for the active frame on the host.
+    // wait for the active frame on the host (the new acquired frame).
     if gs.frame_counter >= FRAME_COUNT {
         // here we do not want the wait value for last frame, we want
         // to wait for the active/current/acquired frame (which in use).
@@ -360,30 +356,6 @@ backend_execute :: () {
             ID3D12Fence_SetEventOnCompletion(gs.d3d_frame_fence, wait_value, null);
         }
     }
-
-    // release objects
-    for gs.release_lists[gs.active_frame] { // TODO add #complete
-        if it.kind == {
-            case .UNKNOWN;    continue;
-            case .SWAPCHAIN;  release_swap_chain_imm(cast(*Swap_Chain) it);
-            case .BIND_GROUP; release_bind_group_imm(cast(*Bind_Group) it);
-            case .RESOURCE; {
-                resource := cast(*Resource) it;
-                if #complete resource.resource_type == {
-                    case .BUFFER;     release_buffer_imm(cast(*Buffer) it);
-                    case .TEXTURE;    release_texture_imm(cast(*Texture) it);
-                    case .UNKNOWN; continue;
-                }
-            }
-        }
-    }
-    gs.release_lists[gs.active_frame].count = 0; // reset but keep memory
-
-    // reset frame memory pool
-    Pool.reset(*gs.frame_pools[gs.active_frame]); // reset but keep memory
-
-    // begin new staging encoder
-    gs.staging_encoder = begin_commands(null, .FIRST);
 }
 
 // wait on the host for the GPU, for all operations.

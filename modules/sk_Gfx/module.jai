@@ -26,7 +26,7 @@
 #scope_module
 Basic         :: #import "Basic";
 String        :: #import "String";
-Pool          :: #import "Pool";
+Pool          :: #import "Pool"; // remove this
 DataStorage   :: #import "sk_Data_Storage"; // @TODO: make this local?
 for_expansion :: DataStorage.for_expansion;
 
@@ -133,7 +133,6 @@ Frontend_State :: struct {
     // -- core
     using config   : Config;
     config.adapter_index = -1;
-    frame_pools    : [FRAME_COUNT] Pool.Pool; // will be reset at end of each frame.// @threadSupport make this thread local
     active_frame   : u16;
     frame_counter  : u64;
     release_lists  : [FRAME_COUNT][..] *Base;
@@ -196,17 +195,16 @@ init :: (config:Config = .{}) -> bool {
         // -- core
         gs.config = config;
         if  !gs.allocator.proc Basic.remember_allocators(*gs.config);
-        for *gs.frame_pools    Pool.set_allocators(it, gs.allocator);
         for *gs.release_lists it.allocator = gs.allocator;
         // -- swap chain
-        gs.swc_storage.allocator        = gs.allocator;
+        gs.swc_storage.allocator = gs.allocator;
         // -- pipeline
         gs.pip_storage.allocator = gs.allocator;
         // -- encoder
         gs.enc_storage.allocator = gs.allocator;
         // -- resources
-        gs.bfr_storage.allocator     = gs.allocator;
-        gs.tex_storage.allocator    = gs.allocator;
+        gs.bfr_storage.allocator = gs.allocator;
+        gs.tex_storage.allocator = gs.allocator;
         gs.bgr_storage.allocator = gs.allocator;
     }
 
@@ -270,13 +268,46 @@ deinit :: () {
         DataStorage.release(*gs.swc_storage);
         // -- core
         for *gs.release_lists Basic.array_reset(it);
-        for *gs.frame_pools   Pool.release(it);
     }
     // reset
     gs.fs = .{};
 }
 
-execute :: backend_execute;
+execute :: () {
+    // end resource staging encoder
+    end_commands(gs.staging_encoder);
+    // make sure all encoders closed
+    #if DEBUG {
+        for encoder: gs.enc_storage {
+            if encoder.current_state == .INVALID break; // this the last used one
+            Basic.assert(encoder.current_state == .EXECUTABLE);
+        }
+    }
+    // backend execute
+    inline backend_execute();
+    // new frame --------------------------
+    // release objects
+    for gs.release_lists[gs.active_frame] { // TODO add #complete
+        if it.kind == {
+            case .UNKNOWN;    continue;
+            case .SWAPCHAIN;  release_swap_chain_imm(cast(*Swap_Chain) it);
+            case .BIND_GROUP; release_bind_group_imm(cast(*Bind_Group) it);
+            case .RESOURCE; {
+                resource := cast(*Resource) it;
+                if #complete resource.resource_type == {
+                    case .BUFFER;     release_buffer_imm(cast(*Buffer) it);
+                    case .TEXTURE;    release_texture_imm(cast(*Texture) it);
+                    case .UNKNOWN; continue;
+                }
+            }
+        }
+    }
+    gs.release_lists[gs.active_frame].count = 0; // reset but keep memory
+    // reset encoder storage
+    DataStorage.reset(*gs.enc_storage);
+    // begin new staging encoder
+    gs.staging_encoder = begin_commands(null, .FIRST);
+}
 
 wait_idle :: backend_wait_idle;
 

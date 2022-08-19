@@ -22,52 +22,27 @@ backend_deinit :: () {
 }
 
 backend_execute :: () {
-    // MOVE this outside the backend
-    // end resource staging encoder
-    end_commands(gs.staging_encoder);
     for encoder: gs.enc_storage {
         using encoder;
-        // break if the encoder not used this frame or not inited
-        if current_state == .INITIAL || current_state == .INVALID break;   // this the last used one
+        if current_state == .INVALID break;   // this the last used one
         Basic.assert(current_state == .EXECUTABLE); // make sure it closed
-        current_state = .INITIAL;
+        current_state = .INVALID;
     }
-
-    gs.frame_counter += 1;
-
+    // swap buffers
+    for gs.swc_storage {
+        if !it.swap_required continue;
+        using it;
+        active_buffer_index  = (active_buffer_index+1) % SWC_BUFFER_COUNT;;
+        swap_required        = false;
+    }
     // new frame ----------------------------------------------------
-    DataStorage.reset(*gs.enc_storage);
-    // begin new staging encoder
-    gs.staging_encoder = begin_commands(null, .FIRST);
-
+    gs.frame_counter += 1;
     // move to next frame
     gs.active_frame = (gs.active_frame+1) % FRAME_COUNT;
-
-    // wait for the active frame on the host.
+    // wait for the active frame on the host (the new acquired frame).
     if gs.frame_counter >= FRAME_COUNT {
         // wait ...
     }
-
-    // release objects
-    for gs.release_lists[gs.active_frame] { // TODO add #complete
-        if it.kind == {
-            case .UNKNOWN;    continue;
-            case .SWAPCHAIN;  release_swap_chain_imm(cast(*Swap_Chain) it);
-            case .BIND_GROUP; release_bind_group_imm(cast(*Bind_Group) it);
-            case .RESOURCE; {
-                resource := cast(*Resource) it;
-                if #complete resource.resource_type == {
-                    case .BUFFER;     release_buffer_imm(cast(*Buffer) it);
-                    case .TEXTURE;    release_texture_imm(cast(*Texture) it);
-                    case .UNKNOWN; continue;
-                }
-            }
-        }
-    }
-    gs.release_lists[gs.active_frame].count = 0; // reset but keep memory
-
-    // reset frame memory pool
-    Pool.reset(*gs.frame_pools[gs.active_frame]); // reset but keep memory
 }
 
 backend_wait_idle :: () {
