@@ -30,13 +30,24 @@ Pool          :: #import "Pool";
 DataStorage   :: #import "sk_Data_Storage"; // @TODO: make this local?
 for_expansion :: DataStorage.for_expansion;
 
-#load "d3d12/backend.jai";
+#if BACKEND == .D3D12 {
+    #load "d3d12/backend.jai";
+} else #if BACKEND == .DUMMY {
+    #load "dummy/backend.jai";
+}
+
 #scope_export
 
 #module_parameters ()(
+    BACKEND     : Backend = .D3D12, // we should remove default
     DEBUG       := true,
     FRAME_COUNT :u16 = 2);
 //---------------------------------------------------------------------
+
+Backend :: enum u16 {
+    DUMMY :: 1;
+    D3D12 :: 2;
+}
 
 ASSERT_ON_FAIL :: true;
 
@@ -193,7 +204,6 @@ init :: (config:Config = .{}) -> bool {
         gs.pip_storage.allocator = gs.allocator;
         // -- encoder
         gs.enc_storage.allocator = gs.allocator;
-        for *gs.d3d_command_list_arrays it.allocator = gs.allocator;
         // -- resources
         gs.bfr_storage.allocator     = gs.allocator;
         gs.tex_storage.allocator    = gs.allocator;
@@ -308,34 +318,6 @@ get_selected_adapter_info :: inline () -> Adapter_Info {
 #load "encoder.jai";
 #load "resources.jai";
 
-//------------------------------------------------------------------------------------
-// Execute All Commands (Render one frame)
-//------------------------------------------------------------------------------------
-
-
-// use this proc to allocate memory in the current frame memory pool and forget it
-// no free call is required, the memory will be re used when the frame is completed.
-fp_alloc :: (size: s64) -> *void {
-    a: Allocator;
-    a.proc = Pool.pool_allocator_proc;
-    a.data = *gs.frame_pools[gs.active_frame];
-    return Basic.alloc(size, a);
-}
-
-fp_New :: ($T: Type, $initialized := true) -> *T {
-    a: Allocator;
-    a.proc = Pool.pool_allocator_proc;
-    a.data = *gs.frame_pools[gs.active_frame];
-    return Basic.New(T, initialized, a);
-}
-
-fp_NewArray :: (count: s64, $T: Type, $initialized := true) -> [] T {
-    a: Allocator;
-    a.proc = Pool.pool_allocator_proc;
-    a.data = *gs.frame_pools[gs.active_frame];
-    return Basic.NewArray(count, T, initialized, a);
-}
-
 // -------------------------------------------------------
 // debug
 //
@@ -351,8 +333,10 @@ Backend_Debug_Message :: Backend_Debug_Message_Type;
 default_debug_messenger_proc :: (severity:Debug_Message_Severity, text:string, loc:Source_Code_Location, bk_msg:*Backend_Debug_Message) {
     //if severity == .ERROR then Basic.assert(false, text, loc=loc);
     if bk_msg {
-        Basic.print("[D3D12][%]: % : %\n", bk_msg.Severity, bk_msg.Category, text);
-        Basic.print("       (%)\n", loc);
+        #if BACKEND == .D3D12 {
+            Basic.print("[D3D12][%]: % : %\n", bk_msg.Severity, bk_msg.Category, text);
+            Basic.print("       (%)\n", loc);
+        }
     } else {
         Basic.print("[GFX][%]: %\n", severity, text);
         //Basic.print("     (%)\n", loc);

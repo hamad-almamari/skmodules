@@ -1,8 +1,14 @@
 // hello gfx minimal example
 Basic :: #import "Basic";
 App   :: #import "sk_App"; 
-Gfx   :: #import "sk_Gfx";
-#import "d3d12"()(INCLUDE_DEBUG_BINDINGS=true); // just to set INCLUDE_DEBUG_BINDINGS
+
+
+//Gfx   :: #import "sk_Gfx"()(BACKEND = .DUMMY);
+Gfx   :: #import "sk_Gfx"()(BACKEND = .D3D12);
+
+// #if false {
+    D3d12 :: #import "d3d12"()(INCLUDE_DEBUG_BINDINGS=true); // just to set INCLUDE_DEBUG_BINDINGS
+// }
 
 // You can use "sk_Gfx" with any module that provides native window handle all what we need is the native window handle.
 // in this example we will use "sk_App" module for creating the window.
@@ -14,8 +20,14 @@ Gfx   :: #import "sk_Gfx";
 g_window    : App.Window;
 g_swap_chain: *Gfx.Swap_Chain;
 g_pipeline  : *Gfx.Pipeline;
-g_shader_vs :: #run Gfx.compile_hlsl_shader(SHADER_TEXT, "VSMain", "vs_5_1");
-g_shader_ps :: #run Gfx.compile_hlsl_shader(SHADER_TEXT, "PSMain", "ps_5_1");
+
+#if Gfx.BACKEND == .D3D12 {
+    g_shader_vs :: #run Gfx.compile_hlsl_shader(SHADER_TEXT, "VSMain", "vs_5_1");
+    g_shader_ps :: #run Gfx.compile_hlsl_shader(SHADER_TEXT, "PSMain", "ps_5_1");
+} else {
+    g_shader_vs :: u8.[];
+    g_shader_ps :: u8.[];
+}
 
 main :: () {
     App.enable_dpi_aware();
@@ -81,6 +93,8 @@ main :: () {
 
         // call this once per frame
         Gfx.execute();
+
+        Basic.sleep_milliseconds(20);
     }
 
     // deinit and release all gpu resources

@@ -246,8 +246,8 @@ Texture_Desc :: struct {
     depth       : u32 = 1;
     format      : Texture_Format;
     sample_count: u16 = 1;
-    mip_count   : u16 = 1;
-    array_count : u16 = 1;
+    mip_levels  : u16 = 1;
+    array_layers: u16 = 1;
     clear_value : Clear_Value;
 }
 
@@ -452,11 +452,6 @@ create_buffer :: (buffer_desc:Buffer_Desc, buffer_data:*void = null) -> *Buffer 
     }
 
     return buffer;
-}
-
-calc_constant_buffer_size :: inline (byte_size:u32) -> u32 {
-    a :u32: 255;
-    return (byte_size + a) & ~a;
 }
 
 release_buffer_imm :: (using buffer:*Buffer) {   

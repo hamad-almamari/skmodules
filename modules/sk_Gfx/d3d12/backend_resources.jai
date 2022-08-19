@@ -26,7 +26,7 @@ backend_init_buffer :: (using buffer:*Buffer) -> bool {
     heap_properties.CreationNodeMask     = 0;
     heap_properties.VisibleNodeMask      = 0;
     // in d3d12 Constant buffers must be 256 byte aligned.
-    if desc.usage & .CONSTANT_BUFFER then desc.size = calc_constant_buffer_size(desc.size);
+    if desc.usage & .CONSTANT_BUFFER then desc.size = cast(u32) Basic.align_forward(desc.size, 256);
     res: D3D12_RESOURCE_DESC;
     res.Dimension  = .BUFFER;
     res.Alignment  = 0;
@@ -83,7 +83,7 @@ backend_deinit_buffer :: inline (using buffer:*Buffer) {
 
 // TODO: make sure the user use correct usages (ex can not be both RT and DS)
 // TODO: replace data with [] u8? NAH ITHINK we shouuld keep it *void
-backend_init_texture :: (using texture:*Texture, texture_data:*void = null) -> bool {
+backend_init_texture :: (using texture:*Texture, texture_data:*void) -> bool {
     heap_properties: D3D12_HEAP_PROPERTIES;
     heap_properties.Type                 = .DEFAULT;
     heap_properties.CPUPageProperty      = .UNKNOWN;
@@ -101,9 +101,9 @@ backend_init_texture :: (using texture:*Texture, texture_data:*void = null) -> b
     res.Alignment        = 0;
     res.Width            = desc.width;
     res.Height           = desc.height;
-    res.DepthOrArraySize = xx desc.array_count;
+    res.DepthOrArraySize = xx desc.array_layers;
     if desc.usage & .TEXTURE_3D then res.DepthOrArraySize = xx desc.depth;
-    res.MipLevels        = desc.mip_count;
+    res.MipLevels        = desc.mip_levels;
     res.Format           = conv_texture_format(desc.format);
     res.SampleDesc.Count = desc.sample_count;
     // https://docs.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture_layout
@@ -211,15 +211,62 @@ backend_init_texture :: (using texture:*Texture, texture_data:*void = null) -> b
         //     Depth:    u32;
         //     RowPitch: u32; (stride?)
         // }
+        // upload size
+
+// copy_texture :: (using encoder:*Encoder, dst:*Texture, dst_offset:u32, src:*Texture, src_offset:u32, size:u32) {
+
+// }
+
+// Texture_Subresource_Info :: struct {
+//     []
+// }
+
+// get_texture_subresources_layout :: (texture:*Texture) -> [] Texture_Subresource_Info { // temproary
+
+// }
+
+// typedef struct VkImageSubresourceRange {
+//     VkImageAspectFlags    aspectMask;
+//     uint32_t              baseMipLevel;
+//     uint32_t              levelCount;
+//     uint32_t              baseArrayLayer;
+//     uint32_t              layerCount;
+// } VkImageSubresourceRange;
+
+// we should make some thing like this
+//input
+    // VkImageAspectFlags    aspectMask;
+    // uint32_t              mipLevel;
+    // uint32_t              arrayLayer;
+// output
+//  typedef struct VkSubresourceLayout {
+//     VkDeviceSize    offset;
+//     VkDeviceSize    size;
+//     VkDeviceSize    rowPitch;
+//     VkDeviceSize    arrayPitch; // or layerpitch?
+//     VkDeviceSize    depthPitch;
+// } VkSubresourceLayout;
+
+// or just like metal
+// [blitCommandEncoder copyFromBuffer:_sourceBuffer
+//                       sourceOffset:0
+//                  sourceBytesPerRow:pixelSize*textureSize.width
+//                sourceBytesPerImage:pixelSize*textureSize.width*textureSize.height
+//                         sourceSize:textureSize
+//                          toTexture:_privateTexture
+//                   destinationSlice:0
+//                   destinationLevel:0
+//                  destinationOrigin:textureOrigin];
+
         fp: [16] D3D12_PLACED_SUBRESOURCE_FOOTPRINT;
         src_height : [16] u32; // num_rows (per slice)
-        src_stride : [16] u64; // src_stride (per slice (stride))
+        src_row_pitch : [16] u64; // src_row_pitch (per slice (stride))
         texture_upload_size: u64;
 
         // pResourceDesc: *D3D12_RESOURCE_DESC, FirstSubresource: u32, NumSubresources: u32, BaseOffset: u64, pLayouts: *D3D12_PLACED_SUBRESOURCE_FOOTPRINT, pNumRows: *u32, pRowSizeInBytes: *u64, pTotalBytes: *u64
-        sub_resource_count := desc.array_count * desc.mip_count; // TODO: DEPTH STINCIL
-        ID3D12Device_GetCopyableFootprints(gs.d3d_device, *res, 0, sub_resource_count, 0, fp.data, src_height.data, src_stride.data, *texture_upload_size);
-        // Basic.print("fp:% \n num_rows:% \n src_stride:% \n texture_upload_size:%, size:%\n", fp, src_height, src_stride, texture_upload_size, upload_size);
+        sub_resource_count := desc.array_layers * desc.mip_levels; // TODO: DEPTH STINCIL
+        ID3D12Device_GetCopyableFootprints(gs.d3d_device, *res, 0, sub_resource_count, 0, fp.data, src_height.data, src_row_pitch.data, *texture_upload_size);
+         Basic.print("fp:% \n src_height:% \n src_row_pitch:% \n texture_upload_size:%, size:%\n", fp, src_height, src_row_pitch, texture_upload_size, upload_size);
         // shall we move this otside of the backend???????
         ub_desc: Buffer_Desc;
         ub_desc.usage = .UPLOAD_BUFFER;
@@ -230,23 +277,23 @@ backend_init_texture :: (using texture:*Texture, texture_data:*void = null) -> b
         // copy each sub resource
         for subrss:0..sub_resource_count-1 {
             // Basic.print("% - %\n", fp[subrss], texture_upload_size);
-            src_slice_offset := subrss * desc.depth * src_height[subrss] * src_stride[subrss];
+            src_slice_offset := subrss * desc.depth * src_height[subrss] * src_row_pitch[subrss];
             dst_slice_offset := fp[subrss].Offset;
             dst_depth        := fp[subrss].Footprint.Depth;
             dst_height       := fp[subrss].Footprint.Height;
-            dst_stride       := fp[subrss].Footprint.RowPitch;
+            dst_row_pitch    := fp[subrss].Footprint.RowPitch;
             for z:0..dst_depth-1 {
-                src_layer_offset := z * src_height[subrss] * src_stride[subrss];
-                dst_layer_offset := z * dst_height * dst_stride;
+                src_layer_offset := z * src_height[subrss] * src_row_pitch[subrss];
+                dst_layer_offset := z * dst_height * dst_row_pitch;
                 // copy each row
                 // @SpeedUp copy all the data into CPU? if we do that the app will use huge amount of memory
                 // when many textures created same time. So for now we will copy by row.
                 for y:0..dst_height-1 {
                     //Basic.print("z:% - y:%\n", z, y);
-                    src_row_offset  := src_slice_offset + src_layer_offset + (y * src_stride[subrss]);
-                    dst_row_offset  := dst_slice_offset + dst_layer_offset + (y * dst_stride);
+                    src_row_offset  := src_slice_offset + src_layer_offset + (y * src_row_pitch[subrss]);
+                    dst_row_offset  := dst_slice_offset + dst_layer_offset + (y * dst_row_pitch);
                     //Basic.print("subresource:% - src_row_offset:% - dst_row_offset:%\n", subrss, src_row_offset, dst_row_offset);
-                    write_upload_buffer_data_imm(upload_buffer, cast(u32) dst_row_offset, texture_data + src_row_offset, cast(u32) src_stride[subrss]);          
+                    write_upload_buffer_data_imm(upload_buffer, cast(u32) dst_row_offset, texture_data + src_row_offset, cast(u32) src_row_pitch[subrss]);          
                 }
             }
             dst_loc: D3D12_TEXTURE_COPY_LOCATION;

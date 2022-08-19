@@ -47,6 +47,7 @@ backend_get_available_adapters_info :: () -> [] Adapter_Info {
 
 backend_init :: () -> bool {
     if gs.d3d_backend_initialized then return true;
+    for *gs.d3d_command_list_arrays it.allocator = gs.allocator;
     // -- core
     {
         // init factory if not initialized
@@ -283,6 +284,7 @@ backend_execute :: () {
 
     // WRNING: The execute/submit order is same as enum members. @priorityOrder
     {
+        // MOVE this outside the backend
         for encoder: gs.enc_storage {
             using encoder;
             // break if the encoder not used this frame or not inited
@@ -299,7 +301,7 @@ backend_execute :: () {
         }
 
         for i:0..PRIORTY_COUNT-1 Basic.array_reset_keeping_memory(*gs.d3d_command_list_arrays[i]);
-        DataStorage.reset(*gs.enc_storage);
+        DataStorage.reset(*gs.enc_storage); // MOVE: out
     }
 
     // timeline mark (execute completed)
@@ -331,7 +333,7 @@ backend_execute :: () {
             #if DEBUG Basic.assert(hr == S_OK); // SOMETHING BAD HAPPEN
         }
 
-        active_buffer_index       = cast(u16) IDXGISwapChain3_GetCurrentBackBufferIndex(d3d_swapchain);
+        active_buffer_index  = cast(u16) IDXGISwapChain3_GetCurrentBackBufferIndex(d3d_swapchain);
         swap_required       = false;
 
         // timeline mark (swapchain x)
@@ -532,9 +534,7 @@ d3d_report_debug_msgs :: (loc: Source_Code_Location = #caller_location) {
         size: u64;
         result := ID3D12InfoQueue_GetMessageA(d3d_info_queue, it, null, *size);
 
-        // TODO: WARNING: This is dummy you should never alloc and free for each msg, but this just an example
-        // You shall find better way.
-        msg:= cast(*D3D12_MESSAGE) fp_alloc(xx size);
+        msg:= cast(*D3D12_MESSAGE) Basic.alloc(xx size, allocator=Basic.temp);
         result = ID3D12InfoQueue_GetMessageA(d3d_info_queue, it, msg, *size);
         //Basic.print("size: %\n", size);
         str: string;

@@ -2,9 +2,13 @@
 v0.00.2 - not released yet
 
 sk_Gfx
+* adding dummy backend.
+* adding constant buffer example.
 * rename Bind_Group_Range_Info.resource_kind to resource_type.
 * rename update_upload_buffer_data_imm to write_upload_buffer_data_imm.
-* adding constant buffer example.
+* rename Texture_Desc.mip_count to mip_levels.
+* rename Texture_Desc.array_count to array_layers.
+* remove fp_alloc, fp_New and fp_NewArray.
 
 -----------------------------------
 v0.00.1 - 16/08/2022

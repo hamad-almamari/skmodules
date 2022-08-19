@@ -128,7 +128,7 @@ main :: () {
         desc.usage        = .SHADER_RESOURCE;
         desc.width        = TEXTURE_WIDTH;
         desc.height       = TEXTURE_HEIGHT;
-        desc.array_count  = 2; // array slice count
+        desc.array_layers  = 2; // array slice count
         desc.format       = TEXTURE_FORMAT;
         g_texture         = Gfx.create_texture(desc, TEXTURE_DATA.data);
     }
