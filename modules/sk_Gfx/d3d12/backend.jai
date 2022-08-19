@@ -6,6 +6,7 @@ Backend_Native_Window :: Windows.HWND;
 Backend_State :: struct {
     // -- core
     // base
+    d3d_backend_initialized: bool;
     d3d_factory            : *IDXGIFactory4;
     d3d_tearing_supported  : bool;
     d3d_adapters_info      : [] Adapter_Info;
@@ -21,8 +22,6 @@ Backend_State :: struct {
     d3d_frame_fence        : *ID3D12Fence; 
     // graphics queue
     d3d_graphics_queue     : *ID3D12CommandQueue;
-    // other
-    d3d_backend_initialized: bool;
     // -- swap chain
     d3d_swc_rtv_heap: *ID3D12DescriptorHeap; // NumDescriptors => max_count_per_block * max_block_count * SWC_BUFFER_COUNT
     // -- pipeline
@@ -42,7 +41,7 @@ Backend_Adapter_Info :: struct {
 
 backend_get_available_adapters_info :: () -> [] Adapter_Info {
     pullGs();
-    if gs.d3d_factory then d3d_init_factory();
+    if !gs.d3d_factory then d3d_init_factory(); // TODO: ERROR
     return gs.d3d_adapters_info;
 }
 
@@ -53,7 +52,7 @@ backend_init :: () -> bool {
     // -- core
     {
         // init factory if not initialized
-        if !gs.d3d_factory then d3d_init_factory();
+        if !gs.d3d_factory then d3d_init_factory(); // TODO: ERROR
         //---------------
         // pick adapter
         result: HRESULT;

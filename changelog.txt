@@ -3,6 +3,7 @@ v0.00.2 - not released yet
 
 sk_Gfx
 * adding dummy backend.
+* adding vulkan backend base.
 * adding constant buffer example.
 * rename Bind_Group_Range_Info.resource_kind to resource_type.
 * rename update_upload_buffer_data_imm to write_upload_buffer_data_imm.
