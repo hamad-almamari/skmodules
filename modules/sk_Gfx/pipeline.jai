@@ -270,6 +270,7 @@ Cull_Mode :: enum u16 { // -> D3D12_CULL_MODE
 
 
 create_pipeline :: (desc:Pipeline_Desc) -> *Pipeline {
+    pullGs();
     #if DEBUG {
         // TODO; checks
     }
@@ -290,6 +291,7 @@ create_pipeline :: (desc:Pipeline_Desc) -> *Pipeline {
 }
 
 release_pipeline_imm :: (pipeline:*Pipeline) {
+    pullGs();
     // release the pipeline immediately
     backend_deinit_pipeline(pipeline);
     << pipeline = .{};

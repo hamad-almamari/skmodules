@@ -6,6 +6,7 @@ Backend_Swap_Chain :: struct {
 }
 
 backend_init_swap_chain :: (using swap_chain:*Swap_Chain) -> bool {
+    pullGs();
     // since we use locator for rtv heap offset we must make sure it is valid
     #if DEBUG Basic.assert(locator.packed_locator != DataStorage.INVALID_LOCATOR_PACKED);
     // create the swap chain
@@ -117,6 +118,7 @@ backend_resize_back_buffers :: (using swap_chain:*Swap_Chain, width:u32, height:
 }
 
 backend_deinit_swapchain :: (using swap_chain:*Swap_Chain) {
+    
     for i:0..SWC_BUFFER_COUNT-1 {
         if d3d_back_buffer_resources[i] == back_buffers_data[i].d3d_resource {
             Basic.assert(desc.sample_count == 1);

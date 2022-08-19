@@ -343,6 +343,7 @@ Texture :: struct {
 // NOTE: stride of texture_data must be 4 byte algin
 // BUG: if texture data is null and then the texture used at the shader will crash!!! fix this
 create_texture :: (texture_desc:Texture_Desc, texture_data:*void = null) -> *Texture {
+    pullGs();
     // TODO: check sample count?
     // check that depth can only used with 3d textures
     // array count can be used with 2d textures (we can also add support for 1D textures if it worthing)
@@ -370,6 +371,7 @@ release_texture_imm :: (texture:*Texture) {
 }
 
 release_texture_wafc :: (texture:*Texture) {   
+    pullGs();
     Basic.array_add(*gs.release_lists[gs.active_frame], texture);
 }
 
@@ -422,6 +424,7 @@ Buffer :: struct {
 }
 
 create_buffer :: (buffer_desc:Buffer_Desc, buffer_data:*void = null) -> *Buffer {
+    pullGs();
     Basic.assert(buffer_desc.usage != 0);
     using buffer := DataStorage.get(*gs.bfr_storage, initialized=true);
     Basic.assert(buffer != null);
@@ -460,6 +463,7 @@ release_buffer_imm :: (using buffer:*Buffer) {
 }
 
 release_buffer_wafc :: inline (buffer:*Buffer) {
+    pullGs();
     Basic.array_add(*gs.release_lists[gs.active_frame], buffer);
 }
 
@@ -694,6 +698,7 @@ Bind_Group :: struct {
 }
 
 create_bind_group :: (resource_count: u32) -> *Bind_Group {
+    pullGs();
     if resource_count == 0 return null;
     bind_group := DataStorage.get(*gs.bgr_storage, initialized=true);
     Basic.assert(bind_group != null);
@@ -719,7 +724,8 @@ release_bind_group_imm :: (bind_group:*Bind_Group) {
     // discard?
 }
 
-release_bind_group_wafc :: (bind_group:*Bind_Group) {   
+release_bind_group_wafc :: (bind_group:*Bind_Group) { 
+    pullGs();  
     Basic.array_add(*gs.release_lists[gs.active_frame], bind_group);
 }
 

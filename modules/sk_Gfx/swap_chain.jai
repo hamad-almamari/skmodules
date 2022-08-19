@@ -22,6 +22,7 @@ Swap_Chain :: struct {
 }
 
 create_swap_chain :: (desc:Swap_Chain_Desc) -> *Swap_Chain {
+    pullGs();
     #if DEBUG {
         if !desc.native_window || !desc.width || !desc.height {
             report_debug_msg(.ERROR, "swap chain native_window is null or width/height = 0.");
@@ -59,6 +60,7 @@ create_swap_chain :: (desc:Swap_Chain_Desc) -> *Swap_Chain {
 resize_back_buffers :: backend_resize_back_buffers; 
 
 release_swap_chain_imm :: (using swap_chain:*Swap_Chain) {
+    pullGs();
     // release the swapchain immediately
     backend_deinit_swapchain(swap_chain);
     << swap_chain = .{};
@@ -68,6 +70,7 @@ release_swap_chain_imm :: (using swap_chain:*Swap_Chain) {
 // Extra
 
 release_swap_chain_wafc :: inline (swap_chain:*Swap_Chain) {
+    pullGs();
     // release the swapchain after active/current frame is completed
     Basic.array_add(*gs.release_lists[gs.active_frame], swap_chain);
 }

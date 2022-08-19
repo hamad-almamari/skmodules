@@ -18,6 +18,7 @@ Backend_Bind_Group :: struct {
 }
 
 backend_init_buffer :: (using buffer:*Buffer) -> bool {
+    pullGs();
     heap_properties: D3D12_HEAP_PROPERTIES;
     heap_properties.Type = .DEFAULT;
     if desc.usage & .UPLOAD_BUFFER then heap_properties.Type = .UPLOAD;
@@ -84,6 +85,7 @@ backend_deinit_buffer :: inline (using buffer:*Buffer) {
 // TODO: make sure the user use correct usages (ex can not be both RT and DS)
 // TODO: replace data with [] u8? NAH ITHINK we shouuld keep it *void
 backend_init_texture :: (using texture:*Texture, texture_data:*void) -> bool {
+    pullGs();
     heap_properties: D3D12_HEAP_PROPERTIES;
     heap_properties.Type                 = .DEFAULT;
     heap_properties.CPUPageProperty      = .UNKNOWN;
@@ -359,6 +361,7 @@ backend_deinit_texture :: inline (using texture:*Texture) {
 }
 
 backend_init_bind_group :: (bind_group:*Bind_Group) -> bool {
+    pullGs();
     if bind_group.resource_count == 0 return false;
     bind_group.d3d_heap_offset = gs.d3d_bgr_views_heap_mark;
     gs.d3d_bgr_views_heap_mark += bind_group.resource_count;
@@ -371,6 +374,7 @@ backend_deinit_bind_group :: (bind_group:*Bind_Group) #expand {
 }
 
 backend_bind_texture :: (bind_group:*Bind_Group, offset:u32, texture:*Texture) {
+    pullGs();
     heap_inc_size   := ID3D12Device_GetDescriptorHandleIncrementSize(gs.d3d_device, .CBV_SRV_UAV);
     heap_cpu_handle := ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(gs.d3d_bgr_views_heap);
     heap_offset     := bind_group.d3d_heap_offset + offset;
@@ -382,6 +386,7 @@ backend_bind_texture :: (bind_group:*Bind_Group, offset:u32, texture:*Texture) {
 }
 
 backend_bind_constant_buffer :: (bind_group:*Bind_Group, offset:u32, buffer:*Buffer) {
+    pullGs();
     heap_inc_size   := ID3D12Device_GetDescriptorHandleIncrementSize(gs.d3d_device, .CBV_SRV_UAV);
     heap_cpu_handle := ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(gs.d3d_bgr_views_heap);
     heap_offset     := bind_group.d3d_heap_offset + offset;

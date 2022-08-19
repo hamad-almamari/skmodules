@@ -13,6 +13,7 @@ Backend_Pipeline :: struct {
 
 // TODO COPY Array views to the desc?
 backend_init_pipeline :: (using pipeline:*Pipeline) -> bool {
+    pullGs();
     // Create an empty root signature.
     // NOTE: see https://alain.xyz/blog/raw-directx12 if you want to use Root Signature Version 1.
 

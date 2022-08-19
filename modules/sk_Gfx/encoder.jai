@@ -55,6 +55,7 @@ Renderpass_Targets :: struct {
 // DO NOT STORE 
 // MUST BE CLOSED BEFORE CALLing execute all commands
 begin_commands :: inline (pipeline: *Pipeline = null, priority := Execute_Priority.NORMAL) -> *Encoder {
+    pullGs();
     encoder: *Encoder = DataStorage.get(*gs.enc_storage, initialized=false);
     Basic.assert(encoder != null); // full
     encoder.priority = priority;

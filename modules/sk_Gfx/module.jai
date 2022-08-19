@@ -116,7 +116,12 @@ debug_messenger_proc :: default_debug_messenger_proc;
 #placeholder backend_deinit_bind_group;
 #placeholder backend_bind_texture;
 
-gs: Global_State;
+pgs: *Global_State;
+
+pullGs :: () #expand {
+    if !pgs then pgs = Basic.New(Global_State);
+    `gs := pgs;
+}
 
 Global_State :: struct {
     using bs: Backend_State;
@@ -191,6 +196,7 @@ get_available_adapters_info :: backend_get_available_adapters_info;
 
 init :: (config:Config = .{}) -> bool {
     #if DEBUG Basic.assert(!is_initialized() || config.adapter_index < 0);
+    pullGs();
     { // set allocators  
         // -- core
         gs.config = config;
@@ -225,6 +231,7 @@ init :: (config:Config = .{}) -> bool {
 }
 
 deinit :: () {
+    pullGs();
     // wait on the host for the GPU, for all operations
     wait_idle();
     // Release
@@ -274,6 +281,7 @@ deinit :: () {
 }
 
 execute :: () {
+    pullGs();
     // end resource staging encoder
     end_commands(gs.staging_encoder);
     // make sure all encoders closed
@@ -323,22 +331,27 @@ get_adapter_info :: inline (adapter_index:int) -> Adapter_Info {
 }
 
 is_initialized :: inline () -> bool {
+    pullGs();
     return gs.adapter_index > -1;
 }
 
 is_vsync :: inline () -> bool {
+    pullGs();
     return gs.vsync;
 }
 
 get_active_frame :: inline () -> u16 {
+    pullGs();
     return gs.active_frame;
 }
 
 get_frame_counter :: inline () -> u64 {
+    pullGs();
     return gs.frame_counter;
 }
 
 get_selected_adapter_info :: inline () -> Adapter_Info {
+    pullGs();
     #if DEBUG Basic.assert(gs.adapter_index > -1, "You need to call init_device before calling this proc.");
     return get_adapter_info(gs.adapter_index);
 }

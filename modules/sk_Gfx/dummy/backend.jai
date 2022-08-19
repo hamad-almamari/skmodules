@@ -22,6 +22,7 @@ backend_deinit :: () {
 }
 
 backend_execute :: () {
+    pullGs();
     for encoder: gs.enc_storage {
         using encoder;
         if current_state == .INVALID break;   // this the last used one

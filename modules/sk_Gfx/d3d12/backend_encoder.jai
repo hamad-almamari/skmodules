@@ -11,6 +11,7 @@ Backend_Encoder :: struct {
 // REMOVE enc_storage
 // TODO check the encoder state
 backend_begin_commands :: (encoder:*Encoder) -> bool {
+    pullGs();
     frame := gs.active_frame;
     Basic.assert(encoder != null); // valid
 
@@ -104,6 +105,7 @@ backend_set_index_buffer :: (using encoder:*Encoder, buffer:*Buffer) {
 }
 
 backend_set_bind_group :: (using encoder:*Encoder, binding:u16, bind_group:*Bind_Group) {
+    pullGs();
     if pipeline.d3d_bg_parameter_index[binding] < 0 return; // do error
     heap_inc_size   := ID3D12Device_GetDescriptorHandleIncrementSize(gs.d3d_device, .CBV_SRV_UAV);
     heap_gpu_handle := ID3D12DescriptorHeap_GetGPUDescriptorHandleForHeapStart(gs.d3d_bgr_views_heap);

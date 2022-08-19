@@ -41,11 +41,13 @@ Backend_Adapter_Info :: struct {
 }
 
 backend_get_available_adapters_info :: () -> [] Adapter_Info {
+    pullGs();
     if gs.d3d_factory then d3d_init_factory();
     return gs.d3d_adapters_info;
 }
 
 backend_init :: () -> bool {
+    pullGs();
     if gs.d3d_backend_initialized then return true;
     for *gs.d3d_command_list_arrays it.allocator = gs.allocator;
     // -- core
@@ -202,6 +204,7 @@ backend_init :: () -> bool {
 }
 
 backend_deinit :: () {
+    pullGs();
     d3d_report_debug_msgs();
     // -- resources
     if gs.d3d_tex_rtv_heap   Windows.IUnknown_Release(gs.d3d_tex_rtv_heap);
@@ -249,6 +252,7 @@ backend_deinit :: () {
 }
 
 backend_execute :: () {
+    pullGs();
     // swc reslove commands 
     resolve_cmds := begin_commands(null, .LAST);
     for gs.swc_storage {
@@ -360,6 +364,7 @@ backend_execute :: () {
 
 // wait on the host for the GPU, for all operations.
 backend_wait_idle :: () {
+    pullGs();
     if gs.d3d_frame_fence {
         // wait on the host for the gpu
         if ID3D12Fence_GetCompletedValue(gs.d3d_frame_fence) < gs.frame_counter {
@@ -392,6 +397,7 @@ SUCCEEDED :: Windows.SUCCEEDED;
 // we must make sure to do not use any of other the state members (other than base)
 // this may be called before init by backend_get_available_adapters_info
 d3d_init_factory :: () -> bool {
+    pullGs();
     if gs.d3d_factory return true;
     gs.d3d_adapters_info.data = gs.d3d_adapters_info_data.data;
     #if DEBUG {
@@ -496,6 +502,7 @@ Backend_Debug_Message_Type :: D3D12_MESSAGE;
 backend_report_backend_debug_msgs :: d3d_report_debug_msgs;
 
 d3d_report_debug_msgs :: (loc: Source_Code_Location = #caller_location) {
+    pullGs();
     if !gs.d3d_debug_info_queue return;
     d3d_info_queue := gs.d3d_debug_info_queue;
     msgs_count := ID3D12InfoQueue_GetNumStoredMessages(d3d_info_queue);
