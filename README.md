@@ -1,4 +1,4 @@
-jai programming language starter kit modules. *(WIP)*
+jai programming language starter modules kit. *(WIP)*
 
 This WORK IS IN PROGRESS, but if you want to play with it download the modules from the releasing page. [Beta](https://github.com/hamad-almamari/jai-sk/releases) the code in the master branch rapidly changing. 
 
