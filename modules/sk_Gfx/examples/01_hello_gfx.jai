@@ -2,14 +2,14 @@
 Basic :: #import "Basic";
 App   :: #import "sk_App"; 
 
-Gfx :: #import "sk_Gfx"()(BACKEND = .VULKAN);
-// Gfx   :: #import "sk_Gfx"()(BACKEND = .D3D12);
-// D3d12 :: #import "d3d12"()(INCLUDE_DEBUG_BINDINGS=true); // just to set INCLUDE_DEBUG_BINDINGS
+//Gfx :: #import "sk_Gfx"()(BACKEND = .VULKAN);
+Gfx   :: #import "sk_Gfx"()(BACKEND = .D3D12);
+D3d12 :: #import "d3d12"()(INCLUDE_DEBUG_BINDINGS=true); // just to set INCLUDE_DEBUG_BINDINGS
 
 // You can use "sk_Gfx" with any module that provides native window handle all what we need is the native window handle.
-// in this example we will use "sk_App" module for creating the window.
+// in this example we will use "sk_App" module for creating our window.hm-modules
 
-// So, All what you need for geting start with this module is window handle
+// So, All what you need for geting start with this module is the window handle
 // for creating swapchan then for this minimal example we will define our pipeline shaders.
 // After that we will create our graphics pipeline.
 
